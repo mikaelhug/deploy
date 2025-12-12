@@ -1,17 +1,14 @@
 import sys
+import os
 import subprocess
 import re
 from pathlib import Path
 from typing import List, Optional, Union
 
-PREV_COMMIT, CURRENT_COMMIT, BASE_DIR = sys.argv[1], sys.argv[2], sys.argv[3]
-
 
 class Deploy:
-    def __init__(self, prev_commit: str, current_commit: str, BASE_DIR: str) -> None:
-        self.prev_commit = prev_commit
-        self.current_commit = current_commit
-        self.base_dir = BASE_DIR
+    def __init__(self) -> None:
+        self.base_dir = os.environ.get("BASE_DIR", "/opt/docker-fleet")
 
     def run_cmd(self, cmd: List[str], cwd: Optional[Union[str, Path]] = None, capture: bool = False) -> Optional[str]:
         """Runs a shell command."""
@@ -76,8 +73,17 @@ class Deploy:
                 print("   Creating (up)...")
                 self.run_cmd(["docker", "compose", "up", "-d", "--remove-orphans"], cwd=app_dir)
 
+    def updating_repo(self) -> None:
+        """Updates the git repository."""
+        print(">> Updating repository...")
+        self.prev_commit = self.run_cmd(["git", "rev-parse", "HEAD"], cwd=self.base_dir, capture=True)
+        self.run_cmd(["git", "fetch", "origin", "main"], cwd=self.base_dir)
+        self.run_cmd(["git", "reset", "--hard", "origin/main"], cwd=self.base_dir)
+        self.current_commit = self.run_cmd(["git", "rev-parse", "HEAD"], cwd=self.base_dir, capture=True)
+
     def run(self) -> None:
-        print("--- Starting Deployment (worker) ---")
+        print("--- Starting Deployment ---")
+        self.updating_repo()
         self.app_dirs = self.find_app_dirs()
 
         if not self.app_dirs:
@@ -102,5 +108,5 @@ class Deploy:
 
 
 if __name__ == "__main__":
-    app = Deploy(PREV_COMMIT, CURRENT_COMMIT, BASE_DIR)
+    app = Deploy()
     app.run()
