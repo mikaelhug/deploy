@@ -5,6 +5,10 @@ import re
 from pathlib import Path
 from typing import List, Optional, Union
 
+# Disable output buffering to ensure real-time log output
+sys.stdout.reconfigure(line_buffering=True)
+sys.stderr.reconfigure(line_buffering=True)
+
 
 class Deploy:
     def __init__(self) -> None:
