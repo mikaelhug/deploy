@@ -63,7 +63,7 @@ Copy the public key to your server's authorized_keys (as shown in the installati
 Create `.github/workflows/deploy.yml` in your docker-fleet repository:
 
 ```yaml
-name: Deploy with GitOps
+name: Sync Fleet
 
 on:
   push:
@@ -74,17 +74,13 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@master
+      - name: Trigger Fleet Update
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /opt/docker-fleet
-            git fetch origin main
-            git reset --hard origin/main
-            python3 /opt/deploy/deploy.py
+          script: run-fleet # The command is ignored due to the SSH key lock
 ```
 
 This workflow will:
