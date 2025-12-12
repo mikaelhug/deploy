@@ -4,8 +4,8 @@ When a change is made to your docker-fleet repository, GitHub will SSH your serv
 # Installation
 On the server
 cd /opt && sudo git clone https://github.com/mikaelhug/deploy.git
-sudo chown -R deployer:docker deploy
+sudo chown -R deployer:deployer deploy
 
 On deployer user
 nano ~/.ssh/authorized_keys
-> command="/opt/deploy/deploy.py",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 <PUBLIC_KEY> github-actions-deploy
+> command="python3 /opt/deploy/deploy.py",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 <PUBLIC_KEY> github-actions-deploy

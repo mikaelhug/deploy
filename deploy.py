@@ -12,7 +12,7 @@ class Deploy:
 
     def run_cmd(self, cmd: List[str], cwd: Optional[Union[str, Path]] = None, capture: bool = False) -> Optional[str]:
         """Runs a shell command."""
-        cwd_path = Path(cwd) if cwd else None
+        cwd_path = Path(cwd) if cwd else Path(self.base_dir)
         if capture:
             return subprocess.check_output(cmd, cwd=cwd_path, text=True).strip()
         else:
@@ -76,10 +76,10 @@ class Deploy:
     def updating_repo(self) -> None:
         """Updates the git repository."""
         print(">> Updating repository...")
-        self.prev_commit = self.run_cmd(["git", "rev-parse", "HEAD"], cwd=self.base_dir, capture=True)
-        self.run_cmd(["git", "fetch", "origin", "main"], cwd=self.base_dir)
-        self.run_cmd(["git", "reset", "--hard", "origin/main"], cwd=self.base_dir)
-        self.current_commit = self.run_cmd(["git", "rev-parse", "HEAD"], cwd=self.base_dir, capture=True)
+        self.prev_commit = self.run_cmd(["git", "rev-parse", "HEAD"], capture=True)
+        self.run_cmd(["git", "fetch", "origin", "main"])
+        self.run_cmd(["git", "reset", "--hard", "origin/main"])
+        self.current_commit = self.run_cmd(["git", "rev-parse", "HEAD"], capture=True)
 
     def run(self) -> None:
         print("--- Starting Deployment ---")
