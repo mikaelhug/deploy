@@ -11,8 +11,8 @@ sys.stderr.reconfigure(line_buffering=True)
 
 
 class Deploy:
-    def __init__(self) -> None:
-        self.base_dir = os.environ.get("BASE_DIR", "/opt/docker-fleet")
+    def __init__(self, base_dir: str) -> None:
+        self.base_dir = base_dir
 
     def run_cmd(self, cmd: List[str], cwd: Optional[Union[str, Path]] = None, capture: bool = False) -> Optional[str]:
         """Runs a shell command."""
@@ -112,5 +112,5 @@ class Deploy:
 
 
 if __name__ == "__main__":
-    app = Deploy()
+    app = Deploy(base_dir=sys.argv[1])
     app.run()
