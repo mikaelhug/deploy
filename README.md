@@ -54,9 +54,9 @@ Copy the public key to your server's authorized_keys (as shown in the installati
 
 1. Go to your docker-fleet repository settings
 2. Navigate to **Secrets and variables** → **Actions**
-3. Create a new secret called `SERVER_HOST` and paste the contents of the private key
-4. Create a secret called `SERVER_USER` with your server's hostname/IP
-5. Create a secret called `SSH_PRIVATE_KEY` with the deployer username (e.g., `deployer`)
+3. Create a new secret called `SSH_PRIVATE_KEY` and paste the contents of the private key
+4. Create a secret called `SERVER_HOST` with your server's hostname/IP
+5. Create a secret called `SERVER_USER` with the deployer username (e.g., `deployer`)
 
 ### 4. Create Workflow File
 
