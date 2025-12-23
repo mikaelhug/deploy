@@ -27,7 +27,7 @@ nano ~/.ssh/authorized_keys
 Add the following line (replace `<PUBLIC_KEY>` with the actual key):
 
 ```
-command="python3 /opt/deploy/deploy.py",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 <PUBLIC_KEY> github-actions-deploy
+command="python3 /opt/deploy/deploy.py /opt/<git-folder>",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 <PUBLIC_KEY> github-actions-deploy
 ```
 
 ### Inside docker-fleet repo
