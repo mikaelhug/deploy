@@ -15,6 +15,7 @@ containerd  deploy  docker-fleet
 cd /opt && sudo git clone https://github.com/mikaelhug/deploy.git
 sudo chown -R deployer:deployer deploy
 ```
+Create docker network: docker network create -d bridge <network-name>
 
 ### On deployer user
 
