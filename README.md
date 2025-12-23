@@ -57,6 +57,7 @@ Copy the public key to your server's authorized_keys (as shown in the installati
 3. Create a new secret called `SSH_PRIVATE_KEY` and paste the contents of the private key
 4. Create a secret called `SERVER_HOST` with your server's hostname/IP
 5. Create a secret called `SERVER_USER` with the deployer username (e.g., `deployer`)
+6. (OPTIONAL) Create a secret called `SERVER_PORT` with the an optional ssh-port
 
 ### 4. Create Workflow File
 
