@@ -1,5 +1,4 @@
 import sys
-import shutil
 import subprocess
 import re
 from pathlib import Path
@@ -9,11 +8,11 @@ from typing import List, Optional, Union
 sys.stdout.reconfigure(line_buffering=True)
 sys.stderr.reconfigure(line_buffering=True)
 
-DOCKER_BIN = shutil.which("docker") or "docker"
 
 class Deploy:
-    def __init__(self, base_dir: str) -> None:
+    def __init__(self, base_dir: str, docker_bin: str) -> None:
         self.base_dir = base_dir
+        self.docker_bin = docker_bin
 
     def run_cmd(self, cmd: List[str], cwd: Optional[Union[str, Path]] = None, capture: bool = False) -> Optional[str]:
         """Runs a shell command."""
@@ -54,7 +53,7 @@ class Deploy:
         """Prunes unused docker images."""
         try:
             print(">> Pruning system...")
-            self.run_cmd([DOCKER_BIN, "system", "prune", "-af"])
+            self.run_cmd([self.docker_bin, "system", "prune", "-af"])
         except subprocess.CalledProcessError as e:
             print(f"WARNING: docker system prune failed: {e}", file=sys.stderr)
 
@@ -62,21 +61,21 @@ class Deploy:
         """Restarts or rebuilds the valid app in the given directory."""
         if rebuild:
             print(f"   [Build-relevant changes] Rebuilding and deploying {app_dir}...")
-            self.run_cmd([DOCKER_BIN, "compose", "up", "-d", "--build", "--remove-orphans"], cwd=app_dir)
+            self.run_cmd([self.docker_bin, "compose", "up", "-d", "--build", "--remove-orphans"], cwd=app_dir)
         else:
             print(f"   [Runtime-only changes] Checking {app_dir}...")
             try:
                 # Check if containers are running
-                project_containers = self.run_cmd([DOCKER_BIN, "compose", "ps", "-q"], cwd=app_dir, capture=True)
+                project_containers = self.run_cmd([self.docker_bin, "compose", "ps", "-q"], cwd=app_dir, capture=True)
             except subprocess.CalledProcessError:
                 project_containers = ""
 
             if project_containers:
                 print("   Restarting...")
-                self.run_cmd([DOCKER_BIN, "compose", "restart"], cwd=app_dir)
+                self.run_cmd([self.docker_bin, "compose", "restart"], cwd=app_dir)
             else:
                 print("   Creating (up)...")
-                self.run_cmd([DOCKER_BIN, "compose", "up", "-d", "--remove-orphans"], cwd=app_dir)
+                self.run_cmd([self.docker_bin, "compose", "up", "-d", "--remove-orphans"], cwd=app_dir)
 
     def updating_repo(self) -> None:
         """Updates the git repository."""
@@ -113,5 +112,5 @@ class Deploy:
 
 
 if __name__ == "__main__":
-    app = Deploy(base_dir=sys.argv[1])
+    app = Deploy(base_dir=sys.argv[1], docker_bin=sys.argv[2])
     app.run()
