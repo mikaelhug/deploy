@@ -85,6 +85,11 @@ class Deploy:
         self.run_cmd(["git", "reset", "--hard", "origin/main"])
         self.current_commit = self.run_cmd(["git", "rev-parse", "HEAD"], capture=True)
 
+        # update submodules if .gitmodules exists
+        if (Path(self.base_dir) / ".gitmodules").exists():
+            print(">> Updating submodules...")
+            self.run_cmd(["git", "submodule", "update", "--init"])
+
     def run(self) -> None:
         print("--- Starting Deployment ---")
         self.updating_repo()
