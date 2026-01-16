@@ -126,7 +126,8 @@ class Deploy:
                 env_path = os.path.join(app_dir, ".env")
                 print(f"   [Secrets change] Decrypting {env_enc_path} to {env_path}...")
                 # use sops to decrypt self.sops_filename
-                self.run_cmd([f"./{self.sops_filename}", "-d", str(env_enc_path), "-o", str(env_path)], cwd=os.path.abspath(__file__))
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                self.run_cmd([f"./{self.sops_filename}", "-d", str(env_enc_path), "-o", str(env_path)], cwd=script_dir)
                 break
 
     def run(self) -> None:
