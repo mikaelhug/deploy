@@ -125,6 +125,8 @@ class Deploy:
         env_enc_path = os.path.join(app_dir, ".env.enc")
         env_path = os.path.join(app_dir, ".env")
         if not os.path.isfile(env_enc_path):
+            if os.path.exists(env_path):
+                os.remove(env_path)
             return
 
         for f in changed_files:
