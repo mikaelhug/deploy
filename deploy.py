@@ -125,7 +125,9 @@ class Deploy:
                 env_enc_path = Path(self.base_dir) / f
                 env_path = Path(self.base_dir) / f[:-4]  # Remove .enc suffix
                 print(f"   [Secrets change] Decrypting {env_enc_path} to {env_path}...")
-                # decrypt_env_file(env_enc_path, env_path)
+                # use sops to decrypt self.sops_filename
+                self.run_cmd([f"./{self.sops_filename}", "-d", str(env_enc_path), "-o", str(env_path)], cwd=app_dir)
+                break
 
     def run(self) -> None:
         print("--- Starting Deployment ---")
