@@ -122,11 +122,13 @@ class Deploy:
 
     def decrypt_secrets(self, app_dir: Path, changed_files: List[str]) -> None:
         """Decrypts .env.enc using ssh private key if it's added or changed."""
+        env_enc_path = os.path.join(app_dir, ".env.enc")
+        env_path = os.path.join(app_dir, ".env")
+        if not os.path.isfile(env_enc_path):
+            return
 
         for f in changed_files:
             if f.endswith(".env.enc"):
-                env_enc_path = os.path.join(app_dir, ".env.enc")
-                env_path = os.path.join(app_dir, ".env")
                 print(f"   [Secrets change] Decrypting {env_enc_path} to {env_path}...")
                 # use sops to decrypt self.sops_filename
                 script_dir = os.path.dirname(os.path.abspath(__file__))
