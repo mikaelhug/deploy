@@ -1,6 +1,9 @@
 import sys
 import subprocess
+import platform
+import glob
 import re
+import os
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -13,6 +16,7 @@ class Deploy:
     def __init__(self, base_dir: str, docker_bin: str) -> None:
         self.base_dir = base_dir
         self.docker_bin = docker_bin
+        self.sops_filename = self.download_sops("v3.11.0")
 
     def run_cmd(self, cmd: List[str], cwd: Optional[Union[str, Path]] = None, capture: bool = False) -> Optional[str]:
         """Runs a shell command."""
@@ -22,6 +26,29 @@ class Deploy:
         else:
             subprocess.run(cmd, cwd=cwd_path, check=True)
             return None
+
+    def download_sops(self, sops_version):
+        system = platform.system().lower()
+        arch = os.uname().machine
+        base_url = "https://github.com/getsops/sops/releases/download"
+        sops_filename = f"sops-{sops_version}.{system}.{arch}"
+        sops_url = f"{base_url}/{sops_version}/{sops_filename}"
+
+        if not os.path.isfile(sops_filename):
+            old_sops_files = glob.glob(f"sops-*.{system}.{arch}")
+            for old_file in old_sops_files:
+                os.remove(old_file)
+                print(f"Removed old version: {old_file}")
+
+            result = os.system(f"curl -LO {sops_url}")
+            if result != 0:
+                print(f"Error: Failed to download {sops_filename}")
+                exit(1)
+
+            os.chmod(sops_filename, 0o755)
+            print(f"Downloaded {sops_filename} successfully")
+
+        return sops_filename
 
     def find_app_dirs(self) -> List[Path]:
         """Finds all directories containing a compose.yaml file."""
@@ -90,6 +117,16 @@ class Deploy:
             print(">> Updating submodules...")
             self.run_cmd(["git", "submodule", "update", "--init"])
 
+    def decrypt_secrets(self, app_dir: Path, changed_files: List[str]) -> None:
+        """Decrypts .env.enc using ssh private key if it's added or changed."""
+
+        for f in changed_files:
+            if f.endswith(".env.enc"):
+                env_enc_path = Path(self.base_dir) / f
+                env_path = Path(self.base_dir) / f[:-4]  # Remove .enc suffix
+                print(f"   [Secrets change] Decrypting {env_enc_path} to {env_path}...")
+                # decrypt_env_file(env_enc_path, env_path)
+
     def run(self) -> None:
         print("--- Starting Deployment ---")
         self.updating_repo()
@@ -107,6 +144,8 @@ class Deploy:
                 continue
 
             rebuild = self.needs_build(changed)
+            # decrypt secrets if needed (if added/changed .env.enc SOPS file)
+            self.decrypt_secrets(app_dir, changed)
             try:
                 self.manipulate_app(app_dir, rebuild)
             except subprocess.CalledProcessError as e:
