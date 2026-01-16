@@ -30,6 +30,9 @@ class Deploy:
     def download_sops(self, sops_version):
         system = platform.system().lower()
         arch = os.uname().machine
+        if arch == "x86_64":
+            arch = "amd64"
+
         base_url = "https://github.com/getsops/sops/releases/download"
         sops_filename = f"sops-{sops_version}.{system}.{arch}"
         sops_url = f"{base_url}/{sops_version}/{sops_filename}"
