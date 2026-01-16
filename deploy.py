@@ -122,11 +122,11 @@ class Deploy:
 
         for f in changed_files:
             if f.endswith(".env.enc"):
-                env_enc_path = Path(self.base_dir) / f
-                env_path = Path(self.base_dir) / f[:-4]  # Remove .enc suffix
+                env_enc_path = os.path.join(app_dir, ".env.enc")
+                env_path = os.path.join(app_dir, ".env")
                 print(f"   [Secrets change] Decrypting {env_enc_path} to {env_path}...")
                 # use sops to decrypt self.sops_filename
-                self.run_cmd([f"./{self.sops_filename}", "-d", str(env_enc_path), "-o", str(env_path)])
+                self.run_cmd([f"./{self.sops_filename}", "-d", str(env_enc_path), "-o", str(env_path)], cwd=os.path.abspath(__file__))
                 break
 
     def run(self) -> None:
