@@ -13,14 +13,15 @@ sys.stderr.reconfigure(line_buffering=True)
 
 
 class Deploy:
-    def __init__(self, base_dir: str, docker_bin: str) -> None:
-        self.base_dir = base_dir
+    def __init__(self, fleet_dir: str, docker_bin: str) -> None:
+        self.fleet_dir = fleet_dir
         self.docker_bin = docker_bin
-        self.sops_filename = self.download_sops("v3.11.0")
+        self.deploy_dir = os.path.dirname(os.path.abspath(__file__))
+        self.sops_path = self.download_sops("v3.11.0")
 
     def run_cmd(self, cmd: List[str], cwd: Optional[Union[str, Path]] = None, capture: bool = False) -> Optional[str]:
         """Runs a shell command."""
-        cwd_path = Path(cwd) if cwd else Path(self.base_dir)
+        cwd_path = Path(cwd) if cwd else Path(self.fleet_dir)
         if capture:
             return subprocess.check_output(cmd, cwd=cwd_path, text=True).strip()
         else:
@@ -35,27 +36,28 @@ class Deploy:
 
         base_url = "https://github.com/getsops/sops/releases/download"
         sops_filename = f"sops-{sops_version}.{system}.{arch}"
+        sops_path = os.path.join(self.deploy_dir, sops_filename)
         sops_url = f"{base_url}/{sops_version}/{sops_filename}"
 
-        if not os.path.isfile(sops_filename):
+        if not os.path.isfile(sops_path):
             old_sops_files = glob.glob(f"sops-*.{system}.{arch}")
             for old_file in old_sops_files:
                 os.remove(old_file)
                 print(f"Removed old version: {old_file}")
 
-            result = os.system(f"curl -LO {sops_url}")
+            result = self.run_cmd(["curl", "-LO", sops_url], cwd=self.deploy_dir)
             if result != 0:
                 print(f"Error: Failed to download {sops_filename}")
                 exit(1)
 
-            os.chmod(sops_filename, 0o755)
+            os.chmod(sops_path, 0o755)
             print(f"Downloaded {sops_filename} successfully")
 
-        return sops_filename
+        return sops_path
 
     def find_app_dirs(self) -> List[Path]:
         """Finds all directories containing a compose.yaml file."""
-        base = Path(self.base_dir)
+        base = Path(self.fleet_dir)
         return [d for d in base.iterdir() if d.is_dir() and (d / "compose.yaml").exists()]
 
     def git_changed_files_for_dir(self, app_dir: Path) -> List[str]:
@@ -116,7 +118,7 @@ class Deploy:
         self.current_commit = self.run_cmd(["git", "rev-parse", "HEAD"], capture=True)
 
         # update submodules if .gitmodules exists
-        if (Path(self.base_dir) / ".gitmodules").exists():
+        if (Path(self.fleet_dir) / ".gitmodules").exists():
             print(">> Updating submodules...")
             self.run_cmd(["git", "submodule", "update", "--init"])
 
@@ -133,7 +135,6 @@ class Deploy:
             if f.endswith(".env.enc"):
                 print(f"   [Secrets change] Decrypting {env_enc_path} to {env_path}...")
                 # use sops to decrypt self.sops_filename
-                script_dir = os.path.dirname(os.path.abspath(__file__))
                 self.run_cmd(
                     [
                         f"./{self.sops_filename}",
@@ -146,7 +147,7 @@ class Deploy:
                         "--decrypt",
                         str(env_enc_path),
                     ],
-                    cwd=script_dir,
+                    cwd=deploy_dir,
                 )
                 break
 
@@ -179,5 +180,5 @@ class Deploy:
 
 
 if __name__ == "__main__":
-    app = Deploy(base_dir=sys.argv[1], docker_bin=sys.argv[2])
+    app = Deploy(fleet_dir=sys.argv[1], docker_bin=sys.argv[2])
     app.run()
